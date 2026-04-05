@@ -1,0 +1,28 @@
+---
+title: "Titanic_kNN"
+author: "Group 8"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+set.seed(18)
+
+library(titanic)
+data(titanic_train)
+
+titanic <- titanic_train[,
+            c("Survived", "Pclass", "Sex", "Age", "Fare")]
+titanic <- na.omit(titanic)
+str(titanic)
+
+
+titanic$Survived <- factor(titanic$Survived)
+titanic$Sex <- factor(titanic$Sex)
+
+
+```
