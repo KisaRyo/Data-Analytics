@@ -12,73 +12,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 set.seed(18)
 
-# Required Packages based on the PDF
 library(titanic)
-library(caret)      # For createDataPartition and confusionMatrix
-library(class)      # For knn
-library(rpart)      # For decision trees
-library(rpart.plot) # For plotting trees
-
-# --- Data Preparation ---
 data(titanic_train)
-titanic <- titanic_train[, c("Survived", "Pclass", "Sex", "Age", "Fare")]
+
+titanic <- titanic_train[,
+            c("Survived", "Pclass", "Sex", "Age", "Fare")]
 titanic <- na.omit(titanic)
+str(titanic)
+
 
 titanic$Survived <- factor(titanic$Survived)
 titanic$Sex <- factor(titanic$Sex)
 
-# Convert Sex to numeric for kNN (Male = 1, Female = 0)
-titanic$Sex_num <- ifelse(titanic$Sex == "male", 1, 0)
-
-
-# --- Data Splitting (Using caret as shown in Chapter 4) ---
-train_index <- createDataPartition(titanic$Survived, p = 0.7, list = FALSE)
-train_data <- titanic[train_index, ]
-test_data <- titanic[-train_index, ]
-
-
-# --- 1. kNN Implementation ---
-# Scale the predictors as recommended 
-train_preds_scaled <- scale(train_data[, c("Pclass", "Sex_num", "Age", "Fare")])
-test_preds_scaled <- scale(test_data[, c("Pclass", "Sex_num", "Age", "Fare")],
-                           center = attr(train_preds_scaled, "scaled:center"),
-                           scale = attr(train_preds_scaled, "scaled:scale"))
-
-# Apply KNN (Using k = 5 as an example)
-knn_pred <- knn(train = train_preds_scaled, 
-                test = test_preds_scaled, 
-                cl = train_data$Survived, 
-                k = 5)
-
-cat("\n--- kNN Confusion Matrix ---\n")
-knn_cm <- confusionMatrix(knn_pred, test_data$Survived)
-print(knn_cm)
-
-
-# --- 2. CART Implementation ---
-# Build the model using rpart
-tree_model <- rpart(Survived ~ Pclass + Sex + Age + Fare, 
-                    data = train_data, 
-                    method = "class")
-
-# Predict on test data
-tree_pred <- predict(tree_model, newdata = test_data, type = "class")
-
-cat("\n--- CART Confusion Matrix ---\n")
-tree_cm <- confusionMatrix(tree_pred, test_data$Survived)
-print(tree_cm)
-
-# Plot the tree
-rpart.plot(tree_model, type = 2, main = "Titanic Survival Tree")
-
 
 ```
-
-1. Perform kNN
-  a. Why does accuracy drop when k becomes too large?
-  b. Why is scaling required for kNN?
-  c. What is the trade-off between small and large k?
-2. Perform CART (Decision Tree Classification)
-  a. Which tree is easier to interpret?
-  b. Which model performs better on test data?
-  c. Which tree is more likely to overfit?
