@@ -184,13 +184,7 @@ ui <- fluidPage(
           ),
           div(class = "sb-nav",
               div(class = "sb-group-label", "Overview"),
-              div(class = "sb-item active", tags$span(class="sb-dot"), "Dashboard"),
-              div(class = "sb-group-label", "Models"),
-              div(class = "sb-item", tags$span(class="sb-dot"), "kNN"),
-              div(class = "sb-item", tags$span(class="sb-dot"), "CART"),
-              div(class = "sb-group-label", "Questions"),
-              div(class = "sb-item", tags$span(class="sb-dot"), "kNN Q&A"),
-              div(class = "sb-item", tags$span(class="sb-dot"), "CART Q&A")
+              div(class = "sb-item active", tags$span(class="sb-dot"), "Dashboard")
           )
       ),
       

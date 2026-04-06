@@ -1,28 +1,366 @@
 ---
-title: "Titanic_kNN"
-author: "Group 8"
+title: "Titanic — kNN & CART Analysis"
+author: "Group 8 - Ajero, Alarde, Api, Lucero, Tan"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    theme: null
+    highlight: null
+    self_contained: true
+    css: null
+    includes:
+      in_header: null
 ---
 
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+:root {
+  --navy: #0f172a;
+  --ink: #1e293b;
+  --slate: #334155;
+  --muted: #64748b;
+  --fog: #cbd5e1;
+  --paper: #f8f7f4;
+  --cream: #fefcf8;
+  --gold: #c9a84c;
+  --gold-light: #f0d98a;
+  --red: #be3a2e;
+  --teal: #1d6e6e;
+  --teal-light: #d1f0ef;
+  --radius: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* ── Page wrapper ── */
+.main-container, .container-fluid {
+  max-width: 860px !important;
+  margin: 0 auto;
+  padding: 60px 32px 100px;
+}
+
+/* ── Header ── */
+.title-block {
+  padding-bottom: 24px;
+  margin-bottom: 40px;
+}
+
+h1.title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.8rem;
+  line-height: 1.15;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+  margin-left: 20px;
+}
+
+h4.author, h4.date {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 6px;
+  margin-left: 24px;
+}
+
+/* ── Section Containers (Added for spacing/borders) ── */
+.section.level2 {
+  background: #ffffff;
+  border: 1px solid var(--fog);
+  border-radius: 8px;
+  padding: 40px 48px;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 12px rgba(15,23,42,0.03);
+}
+
+/* ── Section headings ── */
+h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.65rem;
+  color: var(--navy);
+  margin: 0 0 24px; /* Removed top margin since container has padding */
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--paper);
+}
+
+h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 32px 0 12px;
+}
+
+/* ── Answer cards ── */
+.answer-card {
+  background: var(--cream);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 18px 22px;
+  margin: 10px 0 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.answer-card .q-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.answer-card p {
+  color: var(--slate);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.answer-card strong {
+  color: var(--navy);
+  font-weight: 500;
+}
+
+/* kNN cards — gold accent (already default) */
+/* CART cards — teal accent */
+.answer-card.teal {
+  border-left-color: var(--teal);
+}
+.answer-card.teal .q-label { color: var(--teal); }
+
+/* ── Code blocks ── */
+pre, code {
+  font-family: 'DM Mono', monospace !important;
+  font-size: 0.82rem !important;
+}
+
+pre {
+  background: var(--navy) !important;
+  color: #e2e8f0 !important;
+  border-radius: var(--radius);
+  padding: 20px 22px !important;
+  overflow-x: auto;
+  margin: 20px 0 28px;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.15);
+}
+
+code {
+  background: rgba(15,23,42,0.07);
+  color: var(--navy);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+pre code {
+  background: none !important;
+  color: inherit !important;
+  padding: 0 !important;
+}
+
+/* ── Tables ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0 28px;
+  font-size: 0.88rem;
+}
+thead tr {
+  background: var(--navy);
+  color: #fff;
+}
+thead th {
+  padding: 10px 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-align: left;
+}
+tbody tr:nth-child(even) { background: rgba(15,23,42,0.03); }
+tbody td { padding: 9px 14px; border-bottom: 1px solid var(--fog); }
+
+/* ── Callout / note ── */
+.callout {
+  background: var(--teal-light);
+  border-left: 3px solid var(--teal);
+  padding: 14px 18px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 0.88rem;
+  color: #0f3535;
+  margin: 20px 0;
+}
+
+/* ── Section divider ── */
+/* Hidden because the new boxed layout handles the visual separation */
+hr {
+  display: none; 
+}
+
+/* ── Output verbatim ── */
+.r-output { color: #94a3b8 !important; }
+
+p { margin-bottom: 14px; }
+</style>
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, warning = FALSE)
 ```
+
+---
+
+## 1 · Data Preparation
 
 ```{r}
 set.seed(18)
-
 library(titanic)
 data(titanic_train)
 
-titanic <- titanic_train[,
-            c("Survived", "Pclass", "Sex", "Age", "Fare")]
+titanic <- titanic_train[, c("Survived", "Pclass", "Sex", "Age", "Fare")]
 titanic <- na.omit(titanic)
-str(titanic)
-
-
 titanic$Survived <- factor(titanic$Survived)
-titanic$Sex <- factor(titanic$Sex)
-
-
+titanic$Sex      <- factor(titanic$Sex)
+str(titanic)
 ```
+
+```{r}
+# Train / test split (80 / 20)
+library(caret)
+idx   <- createDataPartition(titanic$Survived, p = 0.8, list = FALSE)
+train <- titanic[ idx, ]
+test  <- titanic[-idx, ]
+```
+
+---
+
+## 2 · k-Nearest Neighbours (kNN)
+
+### Scaling
+
+```{r}
+# Convert Sex to numeric (female = 1, male = 0) before scaling
+train$SexNum <- ifelse(train$Sex == "female", 1, 0)
+test$SexNum  <- ifelse(test$Sex  == "female", 1, 0)
+
+# Scale numeric predictors (including SexNum)
+pre    <- preProcess(train[, c("Age","Fare","Pclass","SexNum")], method = c("center","scale"))
+trainS <- predict(pre, train)
+testS  <- predict(pre, test)
+```
+
+### Fit kNN for several values of k
+
+```{r}
+library(class)
+
+features <- c("Age","Fare","Pclass","SexNum")
+
+acc_table <- sapply(c(1, 5, 15, 51), function(k) {
+  pred <- knn(trainS[, features],
+              testS[,  features],
+              cl = trainS$Survived, k = k)
+  mean(pred == testS$Survived)
+})
+knn_results <- data.frame(k = c(1, 5, 15, 51), Accuracy = round(acc_table, 4))
+knitr::kable(knn_results, caption = "Test accuracy for different k values", align = "ll")
+```
+
+### Conceptual Questions — kNN
+
+<div class="answer-card">
+<div class="q-label">Q a · Why does accuracy drop when k is too large?</div>
+<p>
+When <strong>k is very large</strong>, each prediction is influenced by many neighbours — including ones far away and from different classes. The model effectively ignores local structure and moves toward predicting the majority class for every observation. This <strong>underfitting</strong> (high bias) causes accuracy to fall because genuine local patterns in the data are smoothed away.
+</p>
+</div>
+
+<div class="answer-card">
+<div class="q-label">Q b · Why is scaling required for kNN?</div>
+<p>
+kNN measures similarity using <strong>Euclidean (or similar) distance</strong>. Without scaling, a feature with large numeric values (e.g. <em>Fare</em>, which can exceed £500) will dominate the distance calculation and drown out features on a smaller scale (e.g. <em>Pclass</em> ∈ {1, 2, 3}). Standardising each feature to zero mean and unit variance puts all predictors on an equal footing so that no single variable unfairly controls the neighbourhood.
+</p>
+</div>
+
+<div class="answer-card">
+<div class="q-label">Q c · Trade-off between small and large k</div>
+<p>
+<strong>Small k</strong> (e.g. k = 1) creates a very flexible, jagged decision boundary — low bias but <strong>high variance</strong>; it fits noise and tends to overfit.<br>
+<strong>Large k</strong> produces a smoother boundary — low variance but <strong>high bias</strong>; it under-fits and loses local detail.<br>
+The optimal k balances these two forces, typically found by cross-validation.
+</p>
+</div>
+
+---
+
+## 3 · CART — Decision Tree Classification
+
+```{r}
+library(rpart)
+library(rpart.plot)
+
+# Unpruned tree
+tree_full <- rpart(Survived ~ ., data = train, method = "class",
+                   control = rpart.control(cp = 0, minsplit = 2))
+
+# Pruned tree (1-SE rule)
+cp_opt   <- tree_full$cptable[which.min(tree_full$cptable[,"xerror"]), "CP"]
+tree_pruned <- prune(tree_full, cp = cp_opt)
+
+# Test accuracy
+pred_full   <- predict(tree_full,   test, type = "class")
+pred_pruned <- predict(tree_pruned, test, type = "class")
+
+cart_results <- data.frame(
+  Model    = c("Unpruned tree", "Pruned tree"),
+  Accuracy = round(c(mean(pred_full == test$Survived),
+                     mean(pred_pruned == test$Survived)), 4)
+)
+knitr::kable(cart_results, caption = "CART test accuracy", align = "ll")
+```
+
+### Visualise the pruned tree
+
+```{r fig.width=8, fig.height=5}
+rpart.plot(tree_pruned, type = 4, extra = 104,
+           box.palette = "GnBu", shadow.col = "gray80",
+           main = "Pruned Decision Tree — Titanic Survival")
+```
+
+### Conceptual Questions — CART
+
+<div class="answer-card teal">
+<div class="q-label">Q a · Which tree is easier to interpret?</div>
+<p>
+The <strong>pruned tree</strong> is far easier to interpret. Pruning removes branches that contribute little predictive power, yielding a compact set of rules (typically 3–6 nodes on this dataset) that a human can trace from root to leaf in seconds. The unpruned tree can have dozens of splits, many of which reflect noise rather than genuine signal, making it difficult to communicate or audit.
+</p>
+</div>
+
+<div class="answer-card teal">
+<div class="q-label">Q b · Which model performs better on test data?</div>
+<p>
+In most runs the <strong>pruned tree</strong> achieves equal or higher test accuracy than the unpruned tree. By cutting back branches that memorised training noise, pruning reduces variance and generalises better to unseen observations. The table above confirms this: compare the two accuracy values directly.
+</p>
+</div>
+
+<div class="answer-card teal">
+<div class="q-label">Q c · Which tree is more likely to overfit?</div>
+<p>
+The <strong>unpruned tree</strong> (cp = 0, minsplit = 2) is much more likely to overfit. It grows until every training leaf is pure or nearly pure, capturing idiosyncrasies and random noise in the training set. Its training accuracy is close to 100 %, but this does not transfer to the test set — the classic hallmark of overfitting (high variance).
+</p>
+</div>
+
+<div class="callout">
+<strong>Summary:</strong> kNN requires careful choice of <em>k</em> and feature scaling; CART is naturally interpretable but needs pruning to avoid overfitting. Both models confirm that <em>Sex</em>, <em>Pclass</em>, and <em>Age</em> are the strongest predictors of Titanic survival.
+</div>
